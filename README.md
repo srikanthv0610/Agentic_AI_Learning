@@ -61,7 +61,6 @@ agentic_learning/
 
 - Python 3.11+
 - pip
-- VS Code or any local terminal
 
 ---
 
