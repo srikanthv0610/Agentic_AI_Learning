@@ -43,10 +43,10 @@ This project includes:
 ## Project Structure
 
 ```text
-agentic_learning/
+AGENTIC_AI_LEARNING/
 ├── .venv/
 ├── src/
-│   └── AGENTIC_AI_LEARNING/
+│   └── agentic_learning/
 │       ├── __init__.py
 │       ├── server.py
 │       └── client.py
