@@ -3,51 +3,80 @@ import json
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
+from mcp.client.streamable_http import streamable_http_client
 
-# Configure how to launch the MCP server process in stdio mode.
-# - command: "python"
-# - args: run module agentic_learning.server
-# - env: make sure Python can find src packages
-SERVER_PARAMS = StdioServerParameters(
-    command="python",
-    args=["-m", "agentic_learning.server"],
-    env={"PYTHONPATH": "src"},
-)
+# Commented out: stdio configuration for local server process
+# SERVER_PARAMS = StdioServerParameters(
+#     command="python",
+#     args=["-m", "agentic_learning.server"],
+#     env={"PYTHONPATH": "src"},
+# )
 
+# HTTP endpoint URL for remote MCP server
+SERVER_URL = "http://localhost:8000/mcp"
 
 async def main() -> None:
-    # Start stdio-based client for server process
-    async with stdio_client(SERVER_PARAMS) as (read, write):
-        # Open an MCP session over the stdio pipes
+    # Connect to MCP server via HTTP 
+    async with streamable_http_client(SERVER_URL) as (read, write, _):
+        # Establish MCP session over HTTP streams
         async with ClientSession(read, write) as session:
-            await session.initialize()  # handshake + tool discovery
+            # Initialize session and discover available tools
+            await session.initialize()
 
-            print("\nConnected to MCP server.\n")
+            # Display welcome message and available commands
+            print("\nConnected to MCP server.")
+            print("Commands:")
+            print("  search <query>")
+            print("  details <book_id>")
+            print("  exit\n")
 
-            # List exposed tools from server
+            # Retrieve and display list of available tools
             tools_result = await session.list_tools()
             print("Available tools:")
             for tool in tools_result.tools:
-                # Each tool has name/description
                 print(f"- {tool.name}: {tool.description}")
+            print()
 
-            # Call search_books tool with a query and limit
-            print("\nCalling search_books...\n")
-            search_result = await session.call_tool(
-                "search_books",
-                arguments={"query": "clean code", "limit": 3},
-            )
-            # print structured result using JSON formatting
-            print(json.dumps(search_result.model_dump(), indent=2, default=str))
+            # Interactive command loop
+            while True:
+                user_input = input(">> ").strip()
 
-            # Call get_book_details tool with an ISBN
-            print("\nCalling get_book_details...\n")
-            details_result = await session.call_tool(
-                "get_book_details",
-                arguments={"book_id": "9780132350884"},
-            )
-            print(json.dumps(details_result.model_dump(), indent=2, default=str))
+                # Handle exit command
+                if user_input.lower() == "exit":
+                    print("Exiting client.")
+                    break
 
+                # Handle search command
+                if user_input.lower().startswith("search "):
+                    # Extract query string
+                    query = user_input[len("search "):].strip()
+                    # Call search_books tool on server
+                    result = await session.call_tool(
+                        "search_books",
+                        arguments={"query": query, "limit": 5},
+                    )
+                    # Print formatted JSON response
+                    print(json.dumps(result.model_dump(), indent=2, default=str))
+                    print()
+                    continue
 
+                # Handle details command
+                if user_input.lower().startswith("details "):
+                    # Extract book ID (ISBN or OLID)
+                    book_id = user_input[len("details "):].strip()
+                    # Call get_book_details tool on server
+                    result = await session.call_tool(
+                        "get_book_details",
+                        arguments={"book_id": book_id},
+                    )
+                    # Print formatted JSON response
+                    print(json.dumps(result.model_dump(), indent=2, default=str))
+                    print()
+                    continue
+
+                # Handle invalid input
+                print("Unknown command. Use: search <query>, details <book_id>, or exit.\n")
+
+# Entry point: run async main function
 if __name__ == "__main__":
     asyncio.run(main())

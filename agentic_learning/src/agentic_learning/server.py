@@ -110,7 +110,7 @@ async def get_book_details(book_id: str) -> dict[str, Any]:
 
 # Entry point: Start the MCP server
 def main() -> None:
-    mcp.run()
+    mcp.run(transport="streamable-http")
 
 
 if __name__ == "__main__":
