@@ -46,7 +46,7 @@ This project includes:
 agentic_learning/
 ├── .venv/
 ├── src/
-│   └── agentic_learning/
+│   └── AGENTIC_AI_LEARNING/
 │       ├── __init__.py
 │       ├── server.py
 │       └── client.py
